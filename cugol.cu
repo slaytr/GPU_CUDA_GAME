@@ -85,7 +85,6 @@ int main(int argc, char **argv)
     // printf("height: %d | width: %d\n", y, x);
 
     // Vector List to Single Dimension Array Conversion | -,X replaced with 0,1
-
     for(i=0; i<y; i++){
         for(j=0; j<x; j++){
             if(vec[i][j] == '-'){
@@ -95,9 +94,6 @@ int main(int argc, char **argv)
             else if(vec[i][j] == 'X'){ 
                 board[i*x+j]=1; 
                 boardR[i*x+j]=1;
-            }
-            else{               
-            // cout << "Your input contains invalid characters";
             }
         }
     }
@@ -134,8 +130,6 @@ int main(int argc, char **argv)
                 }
                 cout << '\n';
             }
-            cudaMemcpy(d_board, board, sizeof(int)*x*y, cudaMemcpyHostToDevice);
-            cudaDeviceSynchronize();
             cout << '\n';
         }
         

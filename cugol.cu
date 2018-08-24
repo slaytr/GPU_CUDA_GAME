@@ -15,21 +15,15 @@ __global__ void nextBoard(int x, int y, int* board, int* boardR)
 {     
     int boardSize = x * y;
     int idx = blockDim.x*blockIdx.x+threadIdx.x;
-
     if(idx >= boardSize) return; // handles index range error
-    
     // x, y coordinates
     int posX = idx % x;    // x coordinate
     int posY = idx / x;    // y coordinate
 
     int leftX = (posX + x - 1) % x;   // one left of idx
     int rightX = (posX + 1) % x;      // one right of idx
-
     int posYUp = (posY + y - 1) % y;   // one up of idx
     int posYDown = (posY + 1) % y;     // one down of idx
-
-    // TEST - no values exceed board size
-    // if((posX > boardSize|| posY > boardSize || leftX > boardSize || rightX > boardSize || posYUp > boardSize || posYDown > boardSize)) printf("Error");
 
     // Alive neighbours for each point idx
     int neighbours = board[leftX + posYUp*x] 
@@ -41,18 +35,17 @@ __global__ void nextBoard(int x, int y, int* board, int* boardR)
         + board[posX + posYDown*x] 
         + board[rightX + posYDown*x];
 
-    
     // Assigning new cell value
     boardR[posX+posY*x] = (neighbours == 3 || (neighbours == 2 && board[posY * x + posX])) ? 1 : 0;
 }
 
 int main(int argc, char **argv)
 {
-    int x, y;                       // BOARD DIMENSIONS
-    int *d_board, *d_boardR;        // ARRAY POINTERS
+    int x, y;                       // board dimensions
+    int *d_board, *d_boardR;        // int array pointers
     char* filename = argv[argc-1];  // filename from command line, last argument
     string line;                    // str line to extract from file
-    vector<string> vec;             // vec vec to extract BOARD DIMENSIONS
+    vector<string> vec;             // vec vec to extract board dimensions
     int option;                     // getopt var
     int iter = 1;                   // board iteration variable
     bool verbose = false;       
@@ -78,18 +71,22 @@ int main(int argc, char **argv)
     while (!infile.eof()){
         getline(infile, line);
         vec.push_back(line);
+        // printf("%s\n",line.c_str());
     }
     infile.close();
 
     // Use vector size for board dimensions
     y = vec.size();
     x = vec.front().size();
-
-    int board[x*y], boardR[x*y];
+    
+    int board[x*y], boardR[x*y];   
+    int count = 0;
+    // printf("%d %d", y, x);
 
     // Vector List to Single Dimension Array Conversion | -,X replaced with 0,1
-    for(i=0; i<x; i++){
-        for(j=0; j<y; j++){
+
+    for(i=0; i<y; i++){
+        for(j=0; j<x; j++){
             if(vec[i][j] == '-'){
                 board[i*x+j]=0;
                 boardR[i*x+j]=0;
@@ -98,7 +95,11 @@ int main(int argc, char **argv)
                 board[i*x+j]=1; 
                 boardR[i*x+j]=1;
             }
-            else cout << "Your input contains invalid characters";
+            else{               
+            count++;
+            cout << count;
+            // cout << "Your input contains invalid characters";
+            }
         }
     }
 
@@ -111,11 +112,11 @@ int main(int argc, char **argv)
     cudaMemcpy(d_boardR, boardR, sizeof(int)*x*y, cudaMemcpyHostToDevice);
 
     // for calculating cuda blocks, board size/threads for blocks needed
-    const int xy = 1 + ((x*y-1)/32);
+    const int xy = 1 + ((x*y-1)/512);
 
     // Pick number of iterations to run board on GPU
     for(i=0; i<iter; i++){
-        nextBoard<<<xy,32>>>(x, y, d_board, d_boardR); // 32 threads per block
+        nextBoard<<<xy,512>>>(x, y, d_board, d_boardR); // 32 threads per block
         cudaDeviceSynchronize();
         // Swapping CUDA Kernel input board
         int *temp = d_board;
@@ -125,8 +126,8 @@ int main(int argc, char **argv)
         // if -v, then print each iteration
         if(verbose==true){
             cudaMemcpy(board, d_board, sizeof(int)*x*y, cudaMemcpyDeviceToHost);
-            for(j=0; j<x; j++){
-                for(k=0; k<y; k++){
+            for(j=0; j<y; j++){
+                for(k=0; k<x; k++){
                     if(board[j*x+k]== 0) cout << '-';
                     else if(board[j*x+k]== 1 ) cout << 'X';         
                 }
@@ -144,8 +145,8 @@ int main(int argc, char **argv)
 
     // Print final board to console
     if(verbose==false){
-        for(i=0; i<x; i++){
-            for(j=0; j<y; j++){
+        for(i=0; i<y; i++){
+            for(j=0; j<x; j++){
                 if(boardR[i*x+j]== 0) cout << '-';
                 else if(boardR[i*x+j]== 1 ) cout << 'X';         
             }

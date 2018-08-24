@@ -13,9 +13,9 @@ int i, j, k; // ITERATE VARIABLES
 // cuda kernel
 __global__ void nextBoard(int x, int y, int* board, int* boardR)
 {     
-    int boardSize = x * y;
+    //int boardSize = x * y;
     int idx = blockDim.x*blockIdx.x+threadIdx.x;
-    if(idx >= boardSize) return; // handles index range error
+    //if(idx >= boardSize) return; // handles index range error
     // x, y coordinates
     int posX = idx % x;    // x coordinate
     int posY = idx / x;    // y coordinate
@@ -70,7 +70,9 @@ int main(int argc, char **argv)
     ifstream infile(filename);
     while (!infile.eof()){
         getline(infile, line);
-        vec.push_back(line);
+        if(!line.empty()){
+            vec.push_back(line);
+        }
         // printf("%s\n",line.c_str());
     }
     infile.close();
@@ -80,8 +82,7 @@ int main(int argc, char **argv)
     x = vec.front().size();
     
     int board[x*y], boardR[x*y];   
-    int count = 0;
-    // printf("%d %d", y, x);
+    // printf("height: %d | width: %d\n", y, x);
 
     // Vector List to Single Dimension Array Conversion | -,X replaced with 0,1
 
@@ -96,8 +97,6 @@ int main(int argc, char **argv)
                 boardR[i*x+j]=1;
             }
             else{               
-            count++;
-            cout << count;
             // cout << "Your input contains invalid characters";
             }
         }
@@ -112,20 +111,22 @@ int main(int argc, char **argv)
     cudaMemcpy(d_boardR, boardR, sizeof(int)*x*y, cudaMemcpyHostToDevice);
 
     // for calculating cuda blocks, board size/threads for blocks needed
-    const int xy = 1 + ((x*y-1)/512);
+    const int xy = 1 + ((x*y-1)/32);
 
     // Pick number of iterations to run board on GPU
     for(i=0; i<iter; i++){
-        nextBoard<<<xy,512>>>(x, y, d_board, d_boardR); // 32 threads per block
+        nextBoard<<<xy,32>>>(x, y, d_board, d_boardR); // 1024 threads per block
         cudaDeviceSynchronize();
         // Swapping CUDA Kernel input board
         int *temp = d_board;
         d_board = d_boardR;
         d_boardR = temp;
-        
         // if -v, then print each iteration
+
         if(verbose==true){
+
             cudaMemcpy(board, d_board, sizeof(int)*x*y, cudaMemcpyDeviceToHost);
+            cudaDeviceSynchronize();
             for(j=0; j<y; j++){
                 for(k=0; k<x; k++){
                     if(board[j*x+k]== 0) cout << '-';
@@ -133,11 +134,14 @@ int main(int argc, char **argv)
                 }
                 cout << '\n';
             }
+            cudaMemcpy(d_board, board, sizeof(int)*x*y, cudaMemcpyHostToDevice);
+            cudaDeviceSynchronize();
+            cout << '\n';
         }
-        cout << '\n';
+        
     }
-    // Copy board back from device memory after iter
-    cudaMemcpy(boardR, d_boardR, sizeof(int)*x*y, cudaMemcpyDeviceToHost);
+    // Copy board back from device memory after iterations
+    cudaMemcpy(boardR, d_board, sizeof(int)*x*y, cudaMemcpyDeviceToHost);
 
     // Free memory
     cudaFree(d_board);

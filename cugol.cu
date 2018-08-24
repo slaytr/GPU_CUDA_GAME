@@ -13,10 +13,10 @@ int i, j, k; // ITERATE VARIABLES
 // cuda kernel
 __global__ void nextBoard(int x, int y, int* board, int* boardR)
 {     
-    //int boardSize = x * y;
+    int boardSize = x * y;
     int idx = blockDim.x*blockIdx.x+threadIdx.x;
-    //if(idx >= boardSize) return; // handles index range error
-    // x, y coordinates
+    if(idx >= boardSize) return; // handles index range error causing memcheck errors
+
     int posX = idx % x;    // x coordinate
     int posY = idx / x;    // y coordinate
 

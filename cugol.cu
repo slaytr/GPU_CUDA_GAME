@@ -120,6 +120,9 @@ int main(int argc, char **argv)
         // if -v, then print each iteration
 
         if(verbose==true){
+            // Animate - Clear terminal
+            printf("\033[2J\033[H");
+            usleep(10000);
 
             cudaMemcpy(board, d_board, sizeof(int)*x*y, cudaMemcpyDeviceToHost);
             cudaDeviceSynchronize();

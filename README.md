@@ -53,7 +53,7 @@ Instructions:
 
 * make
 
-* ./cugol -v -i 9000 glider-gun.txt
+* ./cugol -v -i 9000 res/glider-gun.txt
 
 #### Notes:
 

@@ -26,8 +26,22 @@ Our previous big O(N * M) is reduced to O(1)
 
 This sounds great and it is a massive improvement, but it's important to consider that when massive amounts of computation is done simultaneously to consider potential race conditions and memory leaks that may occur. Eg. One thread's variable is overwritten by another thread causing the results to be not as intended. These factors can be overcome by various methods, an example method would be to tie the variables to the thread id and block id combination, which is unique between threads. 
 
+#### Limitations
+
+The amount of threads that can be allocated simultaneously is dependent on the hardware available, each Nvidia GPU comes with varying amounts of CUDA cores which determine how many concurrent threads you can create and use simultaneously. In this example, I used Nvidia GTX 1070 Ti for all testing.
+
 Usage
 =====
+
+#### Dependencies
+Nvidia CUDA Toolkit
+* sudo apt install nvidia-cuda-toolkit
+
+Just run install.sh and it 
+will install all dependencies required, please note the toolkit is ~1.2GB as of 20/04/2019
+
+* ./install_dependencies.sh
+#### Use:
 
 Tested on Ubuntu 16.04
 
@@ -41,7 +55,7 @@ Instructions:
 
 * ./cugol -v -i 9000 glider-gun.txt
 
-Notes:
+#### Notes:
 
 -v = verbose, show each iteration, also includes a terminal clear to animate
 
@@ -49,3 +63,7 @@ Notes:
 
 #### Usage Explained
 The final application takes in 3 parameters which are passed in command line. The flag v indicates that each iteration should be printed, the flag i indicates how many iterations to apply the algorithms for and finally a text file which is a board of "-" and "X" chars, denoting dead and alive cells respectively in the initial state of the board.
+
+![Sample Glider Gun](/Images/GliderGun.png "Glider Gun")
+
+Sample Glider Gun, an existing configuration in which cells are created and killed repeatedly, which exists infinitely

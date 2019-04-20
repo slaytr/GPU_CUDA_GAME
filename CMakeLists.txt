@@ -1,4 +1,4 @@
 cmake_minimum_required(VERSION 2.8)
 
 find_package(CUDA QUIET REQUIRED)
-cuda_add_executable(cugol cugol.cu)
+cuda_add_executable(cugol src/cugol.cu)
